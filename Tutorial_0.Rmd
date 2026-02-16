@@ -1,5 +1,5 @@
 ---
-title: "IB 174 (Ornithology) Phylogenetics Project"
+title: "A short Course in Phylogenetics and Comparative Biology"
 author: "Isaac Krone"
 date: "2025-02-18"
 output: "html_document"
