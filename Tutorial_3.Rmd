@@ -1,0 +1,407 @@
+---
+title: "Tutorial_3"
+author: "Isaac Krone"
+date: "2025-04-07"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+A phylogeny can tell us a lot more than just how closely species are related; it can inform us about the pace of evolution of any number of characters, and can help us disentangle similarities arising from common ancestry from similarities arising from adaptation, allometry, and other evolutionary phenomena. As biologists, we hope to understand the causes of variation in nature, and often a phylogeny is just the first step for doing that.
+
+When we look across species to try to understand common causes of variation, we're practicing comparative biology, nad phylogenies are an essential component for the modern comparative biologist. In this lab, we'll practice several phylogenetic comparative methods, reconstructing the evolutionary history of traits, and measuring how traits correlate with each other and how they might influence the process of evolutionary diversification.
+
+But first, we'll need to gather data.
+
+# 4 - Gather your data
+
+Tobias et al and Moura et al have made all of their data freely
+available, so you can download their huge databases and use them for
+whatever project you'd like.
+
+To get **ANATOMICAL DATA**, download the [Tobias et al.
+dataset](https://doi.org/10.1111/ele.13898). You can read this paper
+open-access in Ecology Letters. If you scroll down to the bottom of the
+article, and click on the the "Open Research" header, you'll see a
+couple of links for the peer review history of the article and for the
+Data and materials. Click on figshare link for the dataset.
+
+This brings you to the figshare page, where the data and code for this
+paper are archived. There's a brief description of the data included
+here. Since we just want their data, not their code, etc. we'll download
+the first file, 'Avonet supplementary dataset 1'
+
+Data here are pretty straightforward: lengths are in millimeters, masses
+are in grams; Hand-Wing Index (HWI) has no units since it's a
+proportion.
+
+To get **BIOGEOGRAPHIC, HABITAT, AND CLIMATE DATA**, download the [Moura
+et al. dataset](https://doi.org/10.1371/journal.pbio.3002658). Again,
+this paper is open access, but the full dataset is a but buried; we can
+download it [here](https://zenodo.org/records/11303604). Pay attention
+to this page - it contains a detailed overview of the dataset. Scroll
+down to the last file in the "Files" pane, called
+"TetrapodTraits_1.0.0.csv," and download it.
+
+**Biogeographic data** are given as percentages of the species range
+that falls within a biogeographic realm. For instance, *Accipiter
+virgatus* is found in the Australasian, Indo-Malyayan, and Palaearctic
+realms. 1.3% of its range is in the Australasian realm, so it has the
+value "0.013554" int the "Australasian" column.
+
+**Habitat data** are given as presences and absences, and the column
+names correspond to the [IUCN RedList classification scheme](#0). If a
+species is present in grassland, it will have "1" marked in the
+"MajorHabitat_4" column; If it is not present in grassland, it will have
+a "0" marked in the "MajorHabitat_4" column.
+
+Other Data sources:
+
+-   **COLOR DATA** [Delhey et al.
+    2023](https://doi.org/10.1073/pnas.2217692120). These authors
+    classified the [percentage of birds' bodies covered by different
+    colors]{.underline} as seen in illustrations from the Handbook of
+    Birds of The World. I pared down their dataset a bit so it's easier
+    to use and included it in this week's files as "Bird Colors-Delhet
+    et al 2023 table S7 (Modified).xlsx" Keep in mind that this dataset
+    includes both male and female color, so if you want to study color,
+    you'll have to do it separately in males and females. This dataset
+    also has some info on cooperative breeding, territoriality, sexual
+    selection, and migratory behavior.
+
+-   **NEST DATA** (type, location, and construction) [Sheard et al
+    2023](https://doi.org/10.1111/geb.13783). Nest location and
+    structure are available for 75% of birds, so the data may be
+    incomplete for your group. Their data is in this week's files as
+    "Nests - Sheard et al 2023.xlsx"
+
+-   Do you have another dataset you'd like to use? Maybe you're
+    interested in beak color in particular, or in the presence of beak
+    serrations or special feather types. As long as you can find a
+    dataset that covers your group (or you can create such a dataset),
+    you're free to use it here.
+
+A note on discrete versus continuous data. A lot of our data, like the
+measurements, range sizes, etc, vary continuously - you could always
+split the difference between two measures. Other data, like habitat type
+and what continent you live on can be modeled as discrete characters -
+you can only have a set number of different states, and there are no
+intermediates. You can turn a continuous character into a discrete
+character by binning values. For instance, though the color data from
+Delhey et al. are given as continuous data, you can turn them into
+discrete data by asking "does this bird have more than 1% red feathers?"
+That changes your data from a continuous percentage to two states "yes
+red" and "no red."
+
+## 4.1 Putting your data together
+
+One of the great things about using R for evolutionary biology is that
+the language has powerful and easy-to-use tools for combining big
+datasets like the ones we've just looked through. With a little bit of
+practice and familiarity with R, you could easily extract all of the
+data you need form these datasets and put it together in one data file,
+assuming that the data all use the same taxonomy for your group.
+
+However, it's not safe to assume that the datasets are all using the
+same taxonomy, and it's just as easy to put a bunch of nonsense together
+as to put the right data together if you're not experienced with R.
+Instead, you'll assemble your data old-school style, in a spreadsheet.
+The code block below will open up your tree and generate a .csv
+spreadsheet based on the tip names in your tree.
+
+```{r INPUT export species spreadsheet}
+library('ape')
+
+tree <- readRDS("My_Data/Timetree.rds")$tree
+write.csv(data.frame(species = tree$tip.label, 
+                     Mass = NA, 
+                     Beak.Length_Culmen = NA),
+          "My_Data/traits.csv")
+```
+
+Open the "traits.csv" spreadsheet in excel. It should have 4 columns;
+column A has a number in it (the order of the tip on the tree), column B
+has a species name in it, and columns C & D, "Mass" and
+"Beak.Length_Culmen", have nothing in them.
+
+What are the traits that you're going to study for your group? Take a
+moment now and jot down the names of traits in row A in the next few
+columns of the sheet. We have access to tons of data here, and it's easy
+to keep adding in traits that we'd like to study, but it will take time
+to add all those data to our sheet. We want to
+
+Now, open the AVONET spreadsheet (Tobias et al. 2022). And add the mass
+and beak length data from this dataset - be very careful to double-check
+that your values are correct.
+
+Make sure to save your spreadsheet as a .xslx file in your My_Data
+folder!
+
+# 5 - Evolutionary Analysis
+
+Now that we have a dataset, let's load it in. Once you've put together
+your dataset, you can load it in here.
+
+```{r INPUT load trait data, message = FALSE}
+#install.packages('readxl')
+library('readxl')
+trait.data <- read_xlsx("Example_Data/vanga_traits.xlsx")
+tree <- readRDS("Example_Data/Vanginae_Timetree.rds")$tree
+```
+
+## 5.1 Ancestral state reconstruction - discrete characters
+
+One of the main reasons we put together a phylogeny is to understand the
+evolution of specific characters in our focal group. One thing we want
+to know is whether species that have similar characters are similar
+because of shared ancestry (they inherited the characters from a common
+ancestor) or because of convergence (they evolved the characters
+independently).
+
+Several of the Vangas (*Newtonia*, *Vanga* and *Calicalicus*) are
+partially terrestrial - that is, they don't spend all of their time up
+in the canopy, but at least sometimes forage on the ground. Did they
+evolve terrestriality independently, or did they all inherit terrestrial
+behavior from a common ancestor?
+
+We can again use a Maximum Likelihood framework to ask this question.
+How likely is each node in the tree to have been a terrestrial animal?
+how likely is it to have been non-terrestrial? Using the data at the
+tips and a simple model of how evolution might work, we can produce
+estimates of the likelihood of certain character states at the nodes.
+
+When you run this with your own discrete character, make sure to update
+the code to include your chosen character instead of "Terrestrial."
+
+```{r INPUT ancestral state reconstruction with diescrete characters}
+library('phytools')
+tree$node.label <- NULL
+ancst_disc <- ace(trait.data$Terrestrial,
+             tree,
+             type = "discrete",
+             method = "ML")
+
+plotTree(tree)
+nodelabels(node=1:tree$Nnode+Ntip(tree),
+    pie=ancst_disc$lik.anc,cex=0.8)
+tiplabels(pie=to.matrix(trait.data$Terrestrial,sort(unique(trait.data$Terrestrial))),cex=0.3)
+```
+
+You can see that most of our nodes aren't particularly well-resolved.
+That's because we have several sister-species pairs that have different
+character states. Intuitively, this makes sense; if closely-related
+species are often dissimilar, then the phylogeny can't tell us much
+about the history of this trait. But it seems like the most likely story
+is that terrestriality was present in the common ancestor of Vanginae,
+and that *Tylas* and *Hypositta* have lost terrestriality.
+
+If you want to know the exact probabilites at the nodes, you can
+reference the probabilities and the nodes' positions on the tree using
+the code below.
+
+```{r check node values}
+plotTree(tree)
+nodelabels(text = 1:tree$Nnode+Ntip(tree),
+           node= 1:tree$Nnode+Ntip(tree))
+anc.terrestrial$lik.anc
+```
+
+## 5.2 Ancestral state reconstruction - continuous characters
+
+Reconstructing the ancestral states of continuous characters is
+conceptually a little bit simpler than reconstructing the states of
+discrete characters. In its simplest form, you could estimate ancestral
+states by just taking the average of the tip data above each node.
+That's an overly simplistic model of how evolution works (traits values
+just diversify outwards from some mean value), but it gets the point
+across.
+
+```{r body size ancst}
+library('phytools')
+ancst_1 <- ace(setNames(trait.data$Mass,nm = trait.data$species), 
+                      phy = tree,
+                      type = "continuous",
+                      model = "ML",
+                      CI = TRUE)
+contMap(tree,
+        setNames(trait.data$Mass,nm = trait.data$species), #it needs a named vector
+        plot=TRUE)
+```
+
+Like before, we can see the reconstructed ancestral states, but we've
+also calculated 95% confidence intervals around our estimates. Notice
+that the interval for node 8 (the root node) is really wide! A lot of
+evolution has happened since this common ancestor, and given how quickly
+body mass is evolving in the Vanginae, it makes sense that we can't be
+super confident in our estimates of body mass in that ancestor.
+
+```{r ancestral states mass}
+plotTree(tree)
+nodelabels(text = 1:tree$Nnode+Ntip(tree),
+           node= 1:tree$Nnode+Ntip(tree))
+
+nice_ancvals <- function(ancst_1){
+  data.frame(node = 1:tree$Nnode+Ntip(tree),
+             lowest.est = ancst_1$CI95[,1],
+             est.value = ancst_1$ace,
+             highest.est = ancst_1$CI95[,2])
+}
+
+nice_ancvals(ancestral_Mass)
+
+```
+
+We can also reconstruct the evolutionary history of beak length.
+
+```{r beak size ancst}
+library('phytools')
+ancst_2 <- ace(setNames(trait.data$Beak.Length_Culmen,nm = trait.data$species), 
+                      phy = tree,
+                      type = "continuous",
+                      model = "ML",
+                      CI = TRUE)
+contMap(tree,
+        setNames(trait.data$Beak.Length_Culmen ,nm = trait.data$species), #it needs a named vector
+        plot=TRUE)
+```
+
+Check out how similar the trees for body mass and beak length look. In
+both, we can see *Tylas* and *Newtonia* evolving pretty quickly. Are
+body mass and relative beak length related in Vanginae?
+
+## 5.3 Accounting for size
+
+Size is perhaps the most fundamental character of organisms; it
+determines so much about how they interact with the physical forces of
+our world and really can't be ignored in comparative biology. So let's
+not ignore it; take a moment to look through your dataset and check out
+how many characters are related to body size.
+
+A lot of our anatomical data are given as lengths. Larger-bodied species
+will probably have bigger beaks, bigger wings, bigger legs, etc than
+smaller-bodied species, so if we want to study just these anatomical
+features (and not some combination of those features and general body
+size), we'll have to correct these lengths for body size so that we can
+see the evolutionary history of beaks, wings, and legs with respect to
+overall body size.
+
+Currently, our body size variable (**mass**) isn't easily comparable to
+these length variables (**lengths**, in mm).
+
+How can we make mass comparable with lengths? Animals are mostly water,
+so their mass is generally proportional by their **volume** multiplied
+by the **density** of water (1 g/cm^3^). **Volume**is length × width ×
+height - three **lengths** multiplied together, which is why the units
+for volume are lengths to the third power. All of the **mass** data we
+have can be thought of as **volume** data multiplied by some density,
+and if we assume the birds' densities are all about the same (a safe
+assumption in closely-related groups), then all of our mass data are
+proportional to some **length** to the third power. Yes, we're modelling
+the bird as a cube, but that doesn't quite matter since, again, our
+birds probably have pretty similar body shapes.
+
+So to get a size variable that's consistent across our dataset, we can
+take the cubic root of the mass data.
+
+```{r get cubic root sizes}
+trait.data$size <- trait.data$Mass^(1/3)
+```
+
+Ok, great. Now, for all of our length traits, we can produce
+*relative* lengths that account for body size, so that we can analyze
+the evolution of body size and length traits separately. In the code box
+below, add new variables to your dataset that account for any length
+characters you're interested in relative to this size variable.
+
+```{r INPUT produce relative lengths}
+
+trait.data$rel.Beak.Length <- trait.data$Beak.Length_Culmen/trait.data$size
+trait.data$rel.Tarsus.Length <- trait.data$Tarsus.Length/trait.data$size
+```
+
+## 5.4 Evolutionary Correlations
+
+One of the driving questions in evolutionary biology is how organisms'
+traits influence their evolution. Often, we might have reason to think
+that one trait might favor the evolution of another trait in a certain
+direction. For instance, in Vanginae, it seems like body size is
+influencing relative beak length. Perhaps larger-bodied birds eat prey
+that are much tougher to process, requiring the beak to evolve to be
+much larger than we'd expect. Or perhaps there's some general tendency
+in these animals for the beak to get proportionally longer as they grow
+(allometry).
+
+We can try to measure correlations in many ways in R. One method for
+testing whether two variables are related is **Generalized Least-Squares
+regression**. This method tries to fit a line to the relationship
+between two (or more) variables, and it's useful because it's very
+flexible.
+
+```{r plot simple correlation}
+library(nlme)
+library(geiger)
+
+correlation.pgls <- gls(
+  # Our formula relates:
+  # the response variable (relative beak length)
+  # to
+  # the independent variable (size)
+  rel.Beak.Length ~ size,
+  data = trait.data,
+  method = "ML")
+
+#Plot Size vs Beak Length
+plot(rel.Beak.Length ~ size, 
+    data = trait.data,cex=1.5,pch=21,bg="grey")
+abline(correlation.pgls,lwd=2,col="darkgrey",lty="dashed")
+```
+
+That looks pretty suggestive. Let's take a look at the p-value for the
+relationship between relative beak length and size.
+
+```{r anova table to find p-value for regression}
+anova(beak.size.cor)
+```
+
+In this ANOVA table, we're looking for the row called size and the
+column called p-value. It's p = 0.0768, meaning there's a 7% chance that
+the relationship between size and beak length here is due to chance
+rather than a real relationship. That's pretty high - we usually aren't
+confident unless the chance is below p= 0.5 (5%), so it seems that there
+isn't a robust relationship between beak length and body size.
+
+But wait! We're acting like these traits are just sitting out there in
+the ether. We know a lot about about how these traits should be
+correlated between our species, because we have a phylogeny. That
+phylogeny tells us that some of our species are more closely related to
+each other than to other species, and it tells us exactly how related
+our species are. We would expect that closely related species have
+similar traits, and that distantly related species have more different
+traits, but we didn't take this into account when we ran this naive
+regression.
+
+GLS allows us to use a measure of phylogenetic relatedness, a
+variance/covariance matrix, to include information about how we expect
+traits to be correlated into our regression. We call this **Phylogenetic
+Generalized Least Squares Regression** **(PGLS)**.
+
+```{r pgls, warning = FALSE}
+correlation.pgls <- gls(rel.Beak.Length ~ size , 
+            data = trait.data,
+            # include a variabnce/covariance matrix
+            correlation = corBrownian(1,tree),
+            method = "ML")
+summary(size.beak.pgls)
+```
+
+In that last summary data frame, we can see that the p-value for size is
+p=0.2199. That means that, given the phylogenetic relatedness of our
+birds, we find no significant relationship between body size and beak
+size in Vanginae.
+
+```{r save work}
+saveRDS(correlation.pgls,"My_Data/PGLScorrelation.RDS")
+
+
+```
+

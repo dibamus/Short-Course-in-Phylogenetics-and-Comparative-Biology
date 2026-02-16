@@ -1,0 +1,227 @@
+---
+title: "Phylogenetics & Comparative Biology Project Template"
+author: "Isaac Krone"
+date: "2025-04-18"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+```
+
+# INSTRUCTIONS
+
+-   put this .Rmd file in the "Short Course in Phylogenetics and Comparative Biology" folder. Make sure that all of the data that you've generated (alignments, trees, trait data) are in the "My_Data" folder within the "Short Course in Phylogenetics and Comparative Biology" folder.
+
+-   edit the code in this document to load in your specific files, and produce the figures for your project. Don't forget to specify which characters need to be size-scaled! All of this code is pulled from tutorials 1-3 (primarily tutorial 3) so it's stuff you've seen before.
+
+-   When your code is all running well in R, hit the "knit" code at the top of this document, and it will produce a .docx document that you can edit in a word editor, complete with 6 figures for you to explain, analyze and reference. This requires the package 'knitr' to be installed, and it should be installed as you run the code chunk below.
+
+    -   BEWARE: When you 'knit' this into a word document, IT WILL OVERWRITE any existing Project_Rubric.docx word document, so make sure once you have a working .docx, save it as something different!
+
+    -   if you try to knit this document while 'Project_Rubric.docx' is open in another program, it won't work!
+
+-   Some of the code blocks here will plot out trees or print data that are just for your reference to answer questions, so be sure to save this document for your reference while you write up your project.
+
+-   You can write up your project in rmarkdown or in a word processor, what matters is that you have all your figures, you provide good insight into what they mean for the evolution of your focal group, and that you keep your writing cogent! Write in paragraphs and be as clear as you can be.
+
+-   If you want to show other figures/modify the project in some way to fit the specific things you wanted to explore, that is a-ok!
+
+-   Make sure you **remove blocks of code** and instructions from your file before you turn it in!
+
+```{r INPUT install dependencies and load in files, include=FALSE}
+if(system.file(package = 'knitr')==""){
+  install.packages('knitr')
+}
+library('knitr')
+library('phytools')
+library('phangorn')
+
+tree_parsimony <- readRDS(paste0("My_Data/",my_favorite_birds,
+                                 "_Parsimony_tree.rds"))
+timetree <- readRDS(paste0("My_Data/",my_favorite_birds,"Timetree.rds"))
+alignment <- read.phyDat(file = "My_Data/Alignment.txt", 
+                         format = "fasta", 
+                         type = "DNA")
+trait.data <- read_xlsx("My_Data/pipridae.traits.xlsx")
+```
+
+## Introduction
+
+(15 pts) Introduce the group of birds you are working on and explain what you set out to do in your project. What are the birds (Order, Family, Genus/Genera (if your project is more specific than a family))? How many species/Genera are there in your focal group? What is their global distribution and general ecology? In what ways are they similar, in what ways are they diverse? Finally, what traits did you want to understand the evolution of, and why did you choose these traits?
+
+## Materials and Methods
+
+### Genetic Data
+
+(5 pts) How did you get your genetic data? What gene did you use and why did you decide to use it. What outgroup/outgroups did you use? Were there species in the focal group that you couldn't get data for? Were there species for which you could only get partial data? How did you create an alignment?
+
+### Phylogenetic Reconstruction
+
+(5 pts) How did you construct your Maximum Parsimony and Maximum Likelihood trees? What functions did you use, and how many rounds of bootstrapping did you do for each of them? How did you determine the best model for evolution for the ML tree? How did you root the trees (in tutorial 3, we used mid-point rooting for the timetree).
+
+### Character Evolution
+
+(5 pts) Where did you get your character data? Were there data missing? Did you have to transform the data (for instance, transforming body mass to a linear measurement, transforming other linear measurements to ratios). How did you deal with missing data?
+
+## Results
+
+### Phylogenetic Reconstruction
+
+How many variable sites were there in your alignment? How much missing data was there?
+
+```{r missing data, echo=FALSE, include = FALSE}
+#Calculate missing data
+paste0("Number of variable sites: ",length(alignment[[1]]))
+
+paste0("Percent Missing Data: ",
+(length(which(unlist(alignment)==18))/length(unlist(alignment)))*100)
+
+```
+
+```{r maximum parsimony tree, fig.fullwidth=TRUE, echo=FALSE}
+par(mai = c(0.1, 0.1, 0.1, 0.1))
+
+mp_parsimony_score <- parsimony(tree_parsimony, alignment)
+
+plotBS(tree_parsimony)
+```
+
+Figure 1: Maximum Parsimony phylogenetic hypothesis for (your focal clade). Node labels are bootstrap support values.
+
+(5 pts) Describe your maximum parsimony tree. What is the parsimony score for the tree? Are the genera in the tree monophyletic? Which genera are not monophyletic (if any)? How well-supported is the tree, and which areas are poorly supported?
+
+```{r maximum likeihood tree}
+par(mai = c(0.1, 0.1, 0.1, 0.1))
+
+plotBS(timetree$tree)
+
+```
+
+Figure 2: Maximum Likelihood phylogenetic hypothesis for (your focal clade). Node labels are bootstrap support values.
+
+(5 pts) What was the best model for evolution for the ML tree? Describe your maximum likelihood timetree. Is your focal group monophyletic in this tree? Are the genera in the tree monophyletic? Which genera are not monophyletic (if any)? How well-supported is the tree, and which areas are poorly supported? Check out the branch lengths. Which clades are old, and which are young? are there areas with a lot of short branches, where diversification seems to have happened quite quickly?
+
+### Character Evolution
+
+```{r INPUT discrete trait tree, echo=FALSE}
+timetree$tree$node.label <- NULL
+anc.terrestrial <- ace(trait.data$Terrestrial,
+             timetree$tree,
+             type = "discrete",
+             method = "ML")
+
+plotTree(timetree$tree)
+nodelabels(node=1:timetree$tree$Nnode+Ntip(timetree$tree),
+    pie=anc.terrestrial$lik.anc,cex=0.8)
+tiplabels(pie=to.matrix(trait.data$Terrestrial,sort(unique(trait.data$Terrestrial))),cex=0.3)
+```
+
+Figure 3: Evolution of (discrete character) within (your focal group). Explain which colors mean what.
+
+(5 pts) Describe how this character has evolved in your focal group. What is the character state in the outgroup?How many times have different discrete traits evolved, and in which clades? Where are the ancestral states ambiguous? Can you say, with any certainty, what the ancestral state was for the whole clade?
+
+```{r adjust continuous traits for size}
+
+trait.data$size <- trait.data$Mass^(1/3)
+trait.data$rel.Beak.Length <- trait.data$Beak.Length_Culmen/trait.data$size
+trait.data$rel.Tarsus.Length <- trait.data$Tarsus.Length/trait.data$size
+```
+
+```{r continuous trait tree 1, echo=FALSE}
+ancestral_cont1 <- ace(setNames(trait.data$Mass,nm = trait.data$species), 
+                      phy = timetree$tree,
+                      type = "continuous",
+                      model = "ML",
+                      CI = TRUE)
+contMap(timetree$tree,
+        setNames(trait.data$Mass,nm = trait.data$species), #it needs a named vector
+        plot=TRUE)
+```
+
+Figure 4: Evolution of (continuous character 1) within (your focal group)
+
+(5 pts) Discuss how continuous character 1 has evolved in your group. What is the character like in the outgroup, and are there particular taxa or clades that have evolved extreme values of this character. How many times have extreme values evolved? Is the character relatively stable (little change across the phylogeny) or labile (lots of change across the phylogeny)? Do you reconstruct the ancestral states with high or low confidence (see the 'set tree values' code chunk).
+
+```{r continuous trait tree 2}
+ancestral_cont2 <- ace(setNames(trait.data$rel.Beak.Length,nm = trait.data$species), 
+                      phy = timetree$tree,
+                      type = "continuous",
+                      model = "ML",
+                      CI = TRUE)
+contMap(timetree$tree,
+        setNames(trait.data$rel.Beak.Length,nm = trait.data$species), #it needs a named vector
+        plot=TRUE)
+
+```
+
+Figure 5: Evolution of (continuous character 2) within (your focal group).
+
+(5 pts) Discuss how continuous character 2 has evolved in your group. What is the character like in the outgroup, and are there particular taxa or clades that have evolved extreme values of this character. How many times have extreme values evolved? Is the character relatively stable (little change across the phylogeny) or labile (lots of change across the phylogeny)? Do you reconstruct the ancestral states with high or low confidence (see the 'set tree values' code chunk).
+
+```{r see tree values, echo=FALSE, include = FALSE}
+plotTree(timetree$tree)
+nodelabels(text = 1:timetree$tree$Nnode+Ntip(timetree$tree),
+           node= 1:timetree$tree$Nnode+Ntip(timetree$tree))
+
+nice_ancvals <- function(ancst){
+  data.frame(node = 1:timetree$tree$Nnode+Ntip(timetree$tree),
+             lowest.est = ancst$CI95[,1],
+             est.value = ancst$ace,
+             highest.est = ancst$CI95[,2])
+}
+
+nice_ancvals(ancestral_cont1)
+nice_ancvals(ancestral_cont2)
+```
+
+```{r INPUT plot correlation and run PGLS}
+beak.size.cor <- gls(
+  # OUr formula relates:
+  # the response variable (relative beak length)
+  # to
+  # the independent variable (size)
+  rel.Beak.Length ~ size,
+  data = trait.data,
+  method = "ML")
+
+
+#Plot Size vs Beak Length
+plot(rel.Beak.Length ~ size, 
+    data = trait.data,cex=1.5,pch=21,bg="grey")
+abline(beak.size.cor,lwd=2,col="darkgrey",lty="dashed")
+```
+
+Figure 6: Correlation of continuous character 1 & continuous character 2.
+
+```{r correlation of character 1 & character 2}
+anova(beak.size.cor)
+```
+
+```{r pgls of character 1 & character 2, include = FALSE}
+size.beak.pgls <- gls(rel.Beak.Length ~ size , 
+            data = trait.data,
+            # include a variabnce/covariance matrix
+            correlation = corBrownian(1,timetree$tree),
+            method = "ML")
+summary(size.beak.pgls)
+```
+
+(5 pts) Do your characters significantly correlate, and what is their relationship (positive, negative, etc.)? When you bring phylogeny into the equation as a covariate, does the significance of the relationship change? Is their relationship significant when phylogeny is taken into account?
+
+## Discussion
+
+(15 pts) Are you satisfied with the trees you resolved, or do you think they're not totally well-resolved? Feel free to look at other literature here, and cite it (Author Date) in text and give a full citation (format does not much matter, as long as it's consistent and has all of the info on authors, date of publication, journal, DOI) at the end of the text. If the tree isn't very good, comment on how it might be improved.
+
+What did you learn about the evolution of the characters in your group? Relate character evolution to other things you've learned about their biology. Again, you may choose to cite other literature, or just cite birds of the world accounts (full citations for the accounts are given at the bottom of the pages on birds of the world). What relationship did you expect for your continuous characters, and how did what you find agree/disagree with that?
+
+What more might you want to study about this clade in light of what you've found?
+
+## References
+
+(5 pts) Be sure to include references for your trait data, as well as any other works you've referenced.
+
+## Authorship Statement
+
+Give a brief (1-2 sentences) summary of who contributed to this work and how they did so. If contributions were equal, please note that! If there is only a sole author, note that all aspects of the work were performed by a single author.

@@ -1,0 +1,121 @@
+---
+title: "IB 174 (Ornithology) Phylogenetics Project"
+author: "Isaac Krone"
+date: "2025-02-18"
+output: "html_document"
+---
+
+# Introduction
+
+Passerine birds (Order Passeriformes) are extremely diverse, with more than 140 families harboring more than 6500 species, around 60% of birds. Rampant convent evolution in the group has led to a lot of historical confusion about how passerines are evolutionarily related to each other, on both the large and small scales. Over the last 30+ years, molecular phylogenetics has fundamentally transformed how ornithologists understand and study passerine evolution. The wealth of data in bird genomes allows us to achieve a much better understanding of evolutionary relationships than morphological and behavioral data, and also provides a (mostly) independent source of data about phylogeny that allows us to reconstruct how morphological and behavioral traits have evolved, and how birds have spread geographically.
+
+The point of this project is to provide hands-on experience in studying bird evolution through the construction of phylogenetic trees and the reconstruction of trait evolution using publicly available data. There is a huge amount of scientific literature out there studying the most effective ways to select genetic data, produce trees, and analyse trait evolution; for the purposes of this project, we'll mostly ignore the diversity of approaches out there in favor of one that's easy to complete and follow. Your job is **not** to find the "correct" phylogeny for your chosen bird group, but to learn:
+
+1.  Where to get data
+
+2.  How to manage that data
+
+3.  How to build a phylogeny using those data
+
+4.  How to reconstruct the evolution of traits on a phylogeny
+
+5.  How to interpret your tree and the trait evolution it reconstructs
+
+By the end of this, we hope you'll have learned a lot about a group of birds that interests you, and have learned the basic process by which biologists reconstruct phylogenetic trees and analyze evolution. And, though we're intending this project to be as plug-and-play as possible, you'll probably pick up some R skills along the way.
+
+# Step 0 - Set up Your Computer
+
+**Don't skip this section.**
+
+You'll need two pieces of software to do this project. If you don't have them on your computer, you will have to download and install them from these links.
+
+1.  [The **R** programming language](https://cran.r-project.org/mirrors.html)
+
+2.  [The **Rstudio** IDE](https://posit.co/downloads/)
+
+## 0.1 Install R
+
+R is a programming language that is widely used by scientists to analyze data. It's extremely versatile and relatively easy to learn and use. **If you haven't worked with R before, or haven't done it recently (in the past few months), you'll want to install the language now.** This tutorial was written with **R 4.4.2**; you will need to have that version (or a more recent version) of R installed for all of the included code to work.
+
+The first step is downloading [The **R** programming language](https://cran.r-project.org/mirrors.html). Head to that link and click on the link for your operating system. Choose the most recent release, and download it from one of the mirrors closest to you.
+
+Once R is downloaded, open the R installer file and follow the instructions to install R.
+
+## 0.2 Install Rstudio
+
+Rstudio is an "Integrated Development Environment" that provides a user-friendly way to work on R scripts and keep track of what they do. It's not strictly necessary for using R, but most R users in biology find it indispensable for working with the language.
+
+Head to the [Rstudio download page](https://posit.co/download/rstudio-desktop/) and download Rstudio.
+
+Once it's downloaded, open the file and follow the instructions to install Rstudio on your computer.
+
+## 0.3 Open The Ornithology Phylogenetics Project in Rstudio
+
+Go to your Ornithology_Phylogenetics_Project folder and open the "Ornithology_Phylogenetics_Project.Rproj" file. Double-clicking should open it up in Rstudio.
+
+Check it out! You're now using Rstudio. This program can show you a lot of information at once, which is great, but it can be a little intimidating at first.
+
+You should see four panels on your screen.
+
+**Upper Left** - your R documents. Here's where you can edit R scripts. An R script is just a text document with a bunch of R code in it. It's the best way to keep track of R code, because you can write, rewrite, and run all the different code in it however you like. There are two big advantages to using a script to do science.
+
+1.  You don't have to remember all of the steps; the script has them all written down.
+
+2.  You can reproduce anything someone else (including past you) does as long as you have their script and all of the software and data that it depends on.
+
+**Upper Right** - Your R environment. This panel shows a list of all the stuff that R knows about. Right now it says "Environment is empty" that means R doesn't know about anything. Once we start telling R stuff, it will ill up.
+
+**Lower Right** - Your Files, Plots, Packages, etc. This panel is showing you the files in your Ornithology_Phylogenetics_Project folder. When we plot data, the plot will show up in this panel as well. If you usually find files on your computer by searching for them rather than navigating through a system of folders, take a moment to see how things are organized in the "Files" tab here. answer these questions.
+
+1.  How many folders are in the "Short Course in Phylogenetics and Comparative Biology" folder? What are their names?
+
+2.  What folder does "Short Course in Phylogenetics and Comparative Biology" live in? You can see this in the blue text beneath the Folder/File/Delete/etc icons.
+
+**Lower Left** - Your Console. This is where R lives. When you run code from your scripts, you can see that code run here. This is also the main way R talks to you, whether that's to tell you what's happening while it installs packages, or to tell you it has encountered an error when you ask it to do something it can't do.
+
+### 0.3.1 Open the Tutorial.Rmd file
+
+Look at your "Files" panel on the bottom-right. In your "Short Course in Phylogenetics and Comparative Biology" folder, there's a file called "Tutorial_0.Rmd" Double click on that file to open it.
+
+Check it out! In the **Upper Left** panel of Rstudio, you're now reading the source code for this document! This is an **Rmarkdown** file, which provides a very user-friendly way to document code and produce webpages, pdfs, and word documents using R. At the **Top Left** of your Scripts panel, click "Visual" to see this document in a more-user-friendly format. On the Right hand side of the document, there's an "Outline" panel that shows an outline of this document. Click on "0.3.1 Open..." To go to the section of the document you're reading right now. Pretty neat, huh?
+
+### 0.3.2 Use R
+
+In the box below is some R code. On the right hand side of the box is a little green arrow. If you're in Rstudio, you can click on the arrow to run the code.
+
+```{r addition}
+2 + 2
+```
+
+You just had R put 2 and 2 together to make 4. Notice how the line `[1] 4` popped up below the box. It also popped up below the script panel, in your Console. Remember, the console is where R lives. Click on the console and type `2 + 2` . See that the same thing happens.
+
+We won't comprehensively cover the basics of R programming in this tutorial; your job is just to learn how to interact with R and where to find stuff so you can start studying birds. You will pick up some R along the way if you pay attention.
+
+In order to facilitate you learning birds rather than learning R, we've set up this Rmarkdown Document to do most of the work for you - you just need to tell R where your files are, and R will do the rest. **But that means that it's really crucial to leave a lot of the code alone.** It's easy to break a script by deleting something or just typing "asdf" in there by mistake. When we want you to edit code, we'll tell you to do so, and we'll provide you with a box marked `INPUT:`
+
+Below is an `INPUT:` box. It's set up to set `my_favorite_birds` to `Vangidae` . Replace `Vangidae` with your answer. Be sure to keep the quotation marks around your answer! Those tell R that you're entering a "string" (a piece of text).
+
+```{r INPUT: favorite bird}
+
+my_favorite_birds <- "Vangidae"
+```
+
+Look at your Environment in the **Upper Right**. There's now something in the "Values" column called `my_favorite_birds` This is an R object - some piece of data. You can see next to it that R understands `my_favorite_birds` to be the text you entered. That's because you used the arrow `<-` to tell R what `my_favorite_birds` is. We can also ask R what `my_favorite_birds` is using the console. Type `my_favorite_birds` into the console below, and R will tell you what your favorite birds are.
+
+### 0.3.3 Save Your Work
+
+Working on scientific and coding projects requires a lot of organization, in part because you'll often try things over and over again with small tweaks. The folder structure you see in your Files pane in the **Lower Right** is meant to help you keep your files organized. When working through the tutorials, you'll pull files from the Example_Data folder, and when working on your own project, you'll use the My_Data folder.
+
+When you save things you built in R, the best format to save them in is a .rda file that R can read.
+
+To do this, we'll use an R function. R functions do things; sometimes that's as simple as adding two numbers together, sometimes it's very complex, like resampling phylogenies and measuring phylogenetic signal of tratis on those phylogenies. The majority of R functions look like this:
+
+`function_name(argument_1, argument_2, argument_3, ...)`
+
+Within the parentheses, we put the arguments of the function, separated by commas. Different functions require different arguments. Arguments might give the function data to work on, specify different actions to perform on data, or specify places to save or load data from.
+
+We'll use the function `saveRDS()` to save `my_favorite_birds` to an file. The function needs at least two arguments: an **object** to save and a **file** name to save that object to. To keep things organized, it's usually useful to name the file after the object
+
+```{r save birds}
+saveRDS(object = my_favorite_birds, file = "My_Data/my_favorite_birds.rds")
+```
